@@ -132,6 +132,11 @@ THREE.PointerLockControls = function ( camera ) {
         moveRight = false;
         break;
 
+      case 76: // L
+        var presentation = scene.getObjectByName('presentation')
+        scene.remove(presentation);
+        break;
+
     }
 
   };

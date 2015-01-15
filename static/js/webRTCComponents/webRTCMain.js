@@ -50,15 +50,17 @@ var updateWallWithScreen = function(divID){
   videoTexture.magFilter = THREE.LinearFilter;
 
   scene = scene || window.scene;
-  var movieMaterial = new THREE.MeshBasicMaterial( { map: videoTexture, overdraw: true, side:THREE.DoubleSide } );
+  var movieMaterial = new THREE.MeshBasicMaterial( { map: videoTexture, overdraw: true } );
   // the geometry on which the movie will be displayed;
   //    movie image will be scaled to fit these dimensions.
 
-  var presentation = new THREE.Mesh( new THREE.PlaneBufferGeometry( 250, 100, 1, 1 ), movieMaterial );
-  presentation.position.set(-75,10,50);
+  var presentation = new THREE.Mesh( new THREE.PlaneBufferGeometry( 75, 50, 1, 1 ), movieMaterial );
+  presentation.position.set(-100,10,51);
+  presentation.name = "presentation";
+  // // presentation.rotation.y = Math.PI / 180;
+  // var yAxis = new THREE.Vector3(0,1,0);
+  // rotateAroundWorldAxis(mesh, yAxis, Math.PI / 180);
   scene.add(presentation);
-  movieScreen.position.set(0,50,0);
-  scene.add(movieScreen);
 };
 
 var addChatMessage = function(peerID, message){
@@ -86,7 +88,7 @@ function videoAdd(video, peer, clientID, isScreen){
     // webrtc.sendDirectlyToAll('realTalkClient','startScreenShare', clientID);
     updateWallWithScreen(peer.id+'_screen_incoming');
 
-    
+
     // document.getElementById(peer.id+'_screen_incoming').setAttribute("id", data.payload);
   }
 }
@@ -182,3 +184,42 @@ var addChatMessage = function(peerID, msgText, msgOwner){
 
 playerEvents.addListener('start_webRTC', initWebRTC);
 playerEvents.addListener('sendChatMessage', sendChatMessage);
+
+var rotObjectMatrix;
+function rotateAroundObjectAxis(object, axis, radians) {
+    rotObjectMatrix = new THREE.Matrix4();
+    rotObjectMatrix.makeRotationAxis(axis.normalize(), radians);
+
+    // old code for Three.JS pre r54:
+    // object.matrix.multiplySelf(rotObjectMatrix);      // post-multiply
+    // new code for Three.JS r55+:
+    object.matrix.multiply(rotObjectMatrix);
+
+    // old code for Three.js pre r49:
+    // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+    // old code for Three.js r50-r58:
+    // object.rotation.setEulerFromRotationMatrix(object.matrix);
+    // new code for Three.js r59+:
+    object.rotation.setFromRotationMatrix(object.matrix);
+}
+
+var rotWorldMatrix;
+// Rotate an object around an arbitrary axis in world space       
+function rotateAroundWorldAxis(object, axis, radians) {
+    rotWorldMatrix = new THREE.Matrix4();
+    rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+    // old code for Three.JS pre r54:
+    //  rotWorldMatrix.multiply(object.matrix);
+    // new code for Three.JS r55+:
+    rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+    object.matrix = rotWorldMatrix;
+
+    // old code for Three.js pre r49:
+    // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+    // old code for Three.js pre r59:
+    // object.rotation.setEulerFromRotationMatrix(object.matrix);
+    // code for r59+:
+    object.rotation.setFromRotationMatrix(object.matrix);
+}
