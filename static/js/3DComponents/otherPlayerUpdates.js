@@ -15,12 +15,14 @@ var createPlayerScreen = function(ID, createTranslation){
   var material = new THREE.MeshFaceMaterial(materialArray);
 
   var playerScreen = new THREE.Mesh( geometry, material );
+  playerScreen.castShadow = true;
 
   playerScreen.name = 'player-' + ID;
 
   body = new Avatar(THREE);
 
   body.mesh.position.y = -sceneVars.playerStartHeight;
+
 
   body.stopWalking();
 
@@ -47,6 +49,9 @@ var removePlayer = function(ID){
 };
 
 var teleportPlayer = function(ID, translation){
+  if(ID === yourID){
+    return;
+  }
 
   var player = scene.getObjectByName('player-'+ID);
 

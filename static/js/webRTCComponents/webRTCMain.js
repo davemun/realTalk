@@ -1,5 +1,6 @@
 var webrtc;
 var yourID;
+var username;
 
 var updateCubeWithVideo = function(divID, clientID){
   console.log("updated cube videoid: "+clientID);
@@ -39,6 +40,7 @@ var updateCubeWithVideo = function(divID, clientID){
   cube.material.needsUpdate = true;
 };
 
+
 var updateWallWithScreen = function(divID){
   var video = document.getElementById(divID);
 
@@ -57,7 +59,9 @@ var updateWallWithScreen = function(divID){
   scene.add(movieScreen);
 };
 
-
+var addChatMessage = function(peerID, message){
+  console.log('got chat message from: '+peerID+' with message '+message);
+}
 
 
 function videoAdd(video, peer, clientID, isScreen){
@@ -85,9 +89,11 @@ function videoAdd(video, peer, clientID, isScreen){
 
 //ongetclientID
 var initWebRTC = function(clientID){
-  console.log('initializing webrtc in rtcMain.js');
+  //console.log('initializing webrtc in rtcMain.js');
   //store clientID
   yourID = clientID;
+  //ask for username
+  username = prompt("Please enter your name", "Anonymous");
 
   //create webRTC obj from library
   webrtc = new SimpleWebRTC({
@@ -106,11 +112,14 @@ var initWebRTC = function(clientID){
   //listen for other clients joining webRTC room, render their video
   webrtc.on('channelMessage', function (peer, label, data) {
     if (data.type === 'setClientID') {
-      console.log('data object from channel message');
-      console.log(data);
+      peer.socketID = data.payload;
+      //console.log('data object from channel message');
+      //console.log(data);
       updateCubeWithVideo(peer.id+'_video_incoming', data.payload);
       //add clientID to DOM video node
       document.getElementById(peer.id+'_video_incoming').setAttribute("id", data.payload);
+    } else if (data.type === 'chatMessage'){
+      addChatMessage(peer.id, data.payload.message, data.payload.username);
     }
   });
 
@@ -123,7 +132,8 @@ var initWebRTC = function(clientID){
   });
 
   webrtc.on('readyToCall', function () {
-    console.log('rtc readyto call');
+    //variable that allows pointer lock
+    webrtc.webcam = true;
     // you can name it anything
     webrtc.joinRoom('realTalkClient');
   });
@@ -133,8 +143,32 @@ var initWebRTC = function(clientID){
   //   console.log(obj);
   // });
 
+  setInterval(function(){
+    //console.log('updating sound')
+    webrtc.setVolumeForAll(0);
+  },1000);
 };
 
+//send a chat message
+var sendChatMessage = function(message){
+  console.log(message);
+  webrtc.sendDirectlyToAll('realTalkClient','chatMessage', {message:message, username:username});
+  addChatMessage(null, message, 'You');
+};
+
+//receive a chat message from a peer
+var addChatMessage = function(peerID, msgText, msgOwner){
+  //construct new chat el
+  var chatMessage = $('<div></div>').html(msgOwner+': '+msgText).attr('id','chatMessage');
+  //add new chat message to the chatBox
+  $('#chatInput').before(chatMessage);
+
+  //attach a timer
+  //after 10 seconds, fade it out slowly, then remove it from the DOM
+  setTimeout(function(){
+    chatMessage.hide('slow', function(){ chatMessage.remove(); });
+  },20000);
+}
 // // set volume on video tag for all peers takse a value between 0 and 1
 // SimpleWebRTC.prototype.setVolumeForAll = function (volume) {
 //     this.webrtc.peers.forEach(function (peer) {
@@ -143,3 +177,4 @@ var initWebRTC = function(clientID){
 // };
 
 playerEvents.addListener('start_webRTC', initWebRTC);
+playerEvents.addListener('sendChatMessage', sendChatMessage);

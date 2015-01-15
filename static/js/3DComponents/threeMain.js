@@ -34,11 +34,23 @@ if ( havePointerLock ) {
 
     if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
 
+      if(!webrtc.webcam){
+        document.getElementById('webcamWarning').style.visibility = 'visible';
+      }else{
+        document.getElementById('webcamWarning').style.visibility = 'hidden';
+      }
+
       controls.enabled = true;
 
       blocker.style.display = 'none';
 
     } else {
+
+      if(!webrtc.webcam){
+        document.getElementById('webcamWarning').style.visibility = 'visible';
+      }else{
+        document.getElementById('webcamWarning').style.visibility = 'hidden';
+      }
 
       controls.enabled = false;
 
@@ -117,10 +129,25 @@ function init() {
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 5000 );
 
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog( 0xffffff, 0, 1750 );
 
-  var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
-  light.position.set( 0.5, 1, 0.75 );
+  scene.fog = new THREE.Fog( 0xffffff, 0, 1750 );
+  scene.fog = new THREE.Fog( 0x000000, 0, 500 );
+  var ambient = new THREE.AmbientLight( 0x111111 );
+  scene.add( ambient );
+  light = new THREE.SpotLight( 0xffffff );
+  light.position.set( 50, 150, 200 );
+  light.target.position.set( 0, 0, 0 );
+  if(true){
+      light.castShadow = true;
+      light.shadowCameraNear = 50;
+      light.shadowCameraFar = 1000;//camera.far;
+      light.shadowCameraFov = 40;
+      light.shadowMapBias = 0.1;
+      light.shadowMapDarkness = 0.7;
+      light.shadowMapWidth = 2*512;
+      light.shadowMapHeight = 2*512;
+      //light.shadowCameraVisible = true;
+  }
   scene.add( light );
 
   controls = new THREE.PointerLockControls( camera );
@@ -128,111 +155,97 @@ function init() {
 
   raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
 
-  // var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-  // var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-  // var playerCub = new THREE.Mesh( geometry, material );
-
-  // scene.add( playerCube );
-
-  ///////////////////
-  // CREATE FLOOR ///
-  ///////////////////
 
 
+  //cannon fps copy floor
 
-  geometry = new THREE.PlaneBufferGeometry( sceneVars.sceneSize, sceneVars.sceneSize, 50,50);
+  var floorTexture = new THREE.ImageUtils.loadTexture( 'images/grid.png' );
+  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+  floorTexture.repeat.set( 100, 100 );
+  geometry = new THREE.PlaneGeometry( 300, 300, 50, 50 );
   geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
+  material = new THREE.MeshLambertMaterial( { map: floorTexture} );
+  floor = new THREE.Mesh( geometry, material );
+  floor.castShadow = true;
+  floor.receiveShadow = true;
+  scene.add( floor );
+
+  //note: 4x4 checkboard pattern scaled so that each square is 25 by 25 pixels.
+
+  // DoubleSide: render texture on both sides of mesh
+  // var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture} )
+  // var floorGeometry = new THREE.PlaneGeometry(sceneVars.sceneSize, sceneVars.sceneSize, 1, 1);
+  // var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  // floor.position.y = -0.5;
+  // floor.rotation.x = Math.PI / 2;
+  // floor.castShadow = true;
+  // floor.receiveShadow = true;
+  // scene.add(floor);
+
+  ///////////////
+  // FURNITURE //
+  ///////////////
+
+  var wallMaterial = new THREE.MeshBasicMaterial( {side:THREE.DoubleSide} );
+
+  //wall 1
+  var wall1 = new THREE.Mesh( new THREE.PlaneBufferGeometry(150, 30), wallMaterial );
+  wall1.position.set(25,10,50);
+  scene.add(wall1);
+
+  var wall2 = new THREE.Mesh( new THREE.PlaneBufferGeometry(100, 30), wallMaterial );
+  wall2.position.set(-50,10,0);
+  wall2.rotation.y = Math.PI / 2;
+  scene.add(wall2);
+
+  var wall3 = new THREE.Mesh( new THREE.PlaneBufferGeometry(100, 30), wallMaterial );
+  wall3.position.set(0,10,-50);
+  scene.add(wall3);
+
+  var wall4 = new THREE.Mesh( new THREE.PlaneBufferGeometry(150, 30), wallMaterial );
+  wall4.rotation.y = Math.PI / 2;
+  wall4.position.set(100,10,-25);
+  scene.add(wall4);
+
+  var wall5 = new THREE.Mesh( new THREE.PlaneBufferGeometry(200, 30), wallMaterial );
+  wall5.position.set(0,10,-100);
+  scene.add(wall5);
+
+  var wall6 = new THREE.Mesh( new THREE.PlaneBufferGeometry(100, 30), wallMaterial );
+  wall6.rotation.y = Math.PI / 2;
+  wall6.position.set(-100,10,-50);
+  scene.add(wall6);
+
+  var wall7 = new THREE.Mesh( new THREE.PlaneBufferGeometry(50, 30), wallMaterial );
+  wall7.position.set(-125,10,0);
+  scene.add(wall7);
+
+  var wall8 = new THREE.Mesh( new THREE.PlaneBufferGeometry(50, 30), wallMaterial );
+  wall8.rotation.y = Math.PI / 2;
+  wall8.position.set(50,10,-25);
+  scene.add(wall8);
+
+  var wall9 = new THREE.Mesh( new THREE.PlaneBufferGeometry(50, 30), wallMaterial );
+  wall9.rotation.y = Math.PI / 2;
+  wall9.position.set(-150,10, 25);
+  scene.add(wall9);
+
+  var wall10 = new THREE.Mesh( new THREE.PlaneBufferGeometry(150, 30), wallMaterial );
+  wall10.position.set(-75,10,50);
+  scene.add(wall10);
 
 
 
-  material = new THREE.MeshBasicMaterial( { color: new THREE.Color('grey'), wireframe:true } );
 
-  mesh = new THREE.Mesh( geometry, material );
-  scene.add( mesh );
 
-  //////////////////////
-  // END CREATE FLOOR //
-  //////////////////////
-
-  //////////////////////
-  // CREATE SKYBOX   ///
-  //////////////////////
-
-  var skyBoxDir = 'UnionSquare';
-
-  var path = "images/skyBoxes/" + skyBoxDir + "/";
-  var format = '.jpg';
-  var urls = [
-    path + 'posx' + format, path + 'negx' + format,
-    path + 'posy' + format, path + 'negy' + format,
-    path + 'posz' + format, path + 'negz' + format
-  ];
-
-  var reflectionCube = THREE.ImageUtils.loadTextureCube( urls );
-  reflectionCube.format = THREE.RGBFormat;
-
-  var shader = THREE.ShaderLib[ "cube" ];
-  shader.uniforms[ "tCube" ].value = reflectionCube;
-
-  var material = new THREE.ShaderMaterial( {
-
-    fragmentShader: shader.fragmentShader,
-    vertexShader: shader.vertexShader,
-    uniforms: shader.uniforms,
-    depthWrite: false,
-    side: THREE.BackSide
-
-  } ),
-
-  skyBox = new THREE.Mesh( new THREE.BoxGeometry( sceneVars.skySize, sceneVars.skySize, sceneVars.skySize ), material );
-  skyBox.position.set(0, sceneVars.skySize * 0.4, 0);
-  scene.add( skyBox );
-
-  ////////////////////////
-  // END CREATE SKYBOX ///
-  ////////////////////////
-
-  ///////////////////
-  // CREATE WALL ////
-  ///////////////////
-  var wallGeometry;
-  var wallMaterial = new THREE.MeshBasicMaterial( {color: 0x8888ff} );
-  var wireMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, visible:false } );
-
-  //west wall
-  wallGeometry = new THREE.BoxGeometry( 10, 100, sceneVars.sceneSize);
-  var wallWest = new THREE.Mesh(wallGeometry, wireMaterial);
-  wallWest.position.set(-sceneVars.sceneSize/2, 50, 0);
-  scene.add(wallWest);
-  collidableMeshList.push(wallWest);
-  //east wall
-  //wallGeometry = new THREE.CubeGeometry(10, 100, 500, 1, 1, 1 );
-  var wallEast = new THREE.Mesh(wallGeometry, wireMaterial);
-  wallEast.position.set(sceneVars.sceneSize/2, 50, 0);
-  scene.add(wallEast);
-  collidableMeshList.push(wallEast);
-  //north wall
-  wallGeometry = new THREE.BoxGeometry(sceneVars.sceneSize, 100, 10, 1, 1, 1 );
-  var wallNorth = new THREE.Mesh(wallGeometry, wireMaterial);
-  wallNorth.position.set(0, 50, -sceneVars.sceneSize/2);
-  scene.add(wallNorth);
-  collidableMeshList.push(wallNorth);
-  //south wall
-  //wallGeometry = new THREE.CubeGeometry(500, 100, 10, 1, 1, 1 );
-  var wallSouth = new THREE.Mesh(wallGeometry, wireMaterial);
-  wallSouth.position.set(0, 50, sceneVars.sceneSize/2);
-  scene.add(wallSouth);
-  collidableMeshList.push(wallSouth);
-
-  ///////////////////////
-  // END CREATE WALL ////
-  ///////////////////////
 
 
 
 
   renderer = new THREE.WebGLRenderer();
-  renderer.setClearColor( 0xffffff );
+  renderer.shadowMapEnabled = true;
+  renderer.shadowMapSoft = true;
+  renderer.setClearColor( scene.fog.color, 1  );
   renderer.setSize( window.innerWidth, window.innerHeight );
 
   document.body.appendChild( renderer.domElement );
