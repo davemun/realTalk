@@ -53,8 +53,10 @@ var updateWallWithScreen = function(divID){
   var movieMaterial = new THREE.MeshBasicMaterial( { map: videoTexture, overdraw: true, side:THREE.DoubleSide } );
   // the geometry on which the movie will be displayed;
   //    movie image will be scaled to fit these dimensions.
-  var movieGeometry = new THREE.PlaneGeometry( 250, 100, 1, 1 );
-  var movieScreen = new THREE.Mesh( movieGeometry, movieMaterial );
+
+  var presentation = new THREE.Mesh( new THREE.PlaneBufferGeometry( 250, 100, 1, 1 ), movieMaterial );
+  presentation.position.set(-75,10,50);
+  scene.add(presentation);
   movieScreen.position.set(0,50,0);
   scene.add(movieScreen);
 };
@@ -83,6 +85,8 @@ function videoAdd(video, peer, clientID, isScreen){
     // console.log('sent screenShare clientID: '+clientID);
     // webrtc.sendDirectlyToAll('realTalkClient','startScreenShare', clientID);
     updateWallWithScreen(peer.id+'_screen_incoming');
+
+    
     // document.getElementById(peer.id+'_screen_incoming').setAttribute("id", data.payload);
   }
 }
